@@ -1,5 +1,200 @@
 proc fcmp outlib=sasuser.userfuncs.geo;
 
+	FUNCTION sector_matrix_to_index(geohash_matrix $, level) $;
+
+		length position $ 25;
+
+		array level_rows[4] (8, 32, 256, 1024, 8192, 32768, 262144, 1048576, 8388608, 33554432, 268435456, 1073741824);
+		array level_cols[4] (4, 32, 128, 1024, 4096, 32768, 131072, 1048576, 4194304, 33554432, 134217728, 1073741824);
+
+		row = 0;
+		col = 0;
+
+		do i=1 to level;
+			
+			temp_level = scan(geohash_matrix, i, '#');
+
+			row_temp = input(scan(temp_level, 1, '-'), 16.0);
+			col_temp = input(scan(temp_level, 2, '-'), 16.0);
+
+			if i ^= level then do;	
+
+				row = row + level_rows[i] * row_temp;
+				col = col + level_cols[i] * col_temp;
+
+			end;
+			else do;
+
+				row = row + row_temp;
+				col = col + col_temp;
+
+			end;
+
+		end;
+
+		position = catx("-", row, col);
+
+		return(position);
+
+	endsub;
+
+	FUNCTION geohash_sector_matrix(longitude, latitude, level) $;
+
+		latmin = -90;
+		latmax = 90;
+		lonmin = -180;
+		lonmax = 180;
+
+		length hash_bits $ 60 geohash_coor_mat $ 50 hash_chunck $ 5 hash_char $ 1;
+
+		do i=1 to 5*level;
+
+			if mod(i,2) ^= 1 then do;
+
+				latmid = (latmin + latmax)/2;
+
+				if latitude < latmid then do;
+					bit = 0;
+					latmax = latmid;
+				end;
+				else do;
+					bit = 1;
+					latmin = latmid;				
+				end;
+
+				hash_bits = catt(hash_bits, bit);
+
+			end;
+			else do;
+					
+				lonmid = (lonmin + lonmax)/2;
+
+				if longitude < lonmid then do;
+					bit = 0;
+					lonmax = lonmid;
+				end;
+				else do;
+					bit = 1;
+					lonmin = lonmid;				
+				end;
+
+				hash_bits = catt(hash_bits, bit);
+
+			end;
+
+		end;
+
+		cont = 1;
+
+		do j=1 to 5*level by 5;
+			
+			hash_chunck = substr(hash_bits, j, j+5);
+			binary_chunck_value = input(hash_chunck, binary5.);
+
+			if mod(cont, 2) ^= 1 then do;
+
+				select(binary_chunck_value + 1);
+
+					when(11) matrix_pos = "0-0";
+					when(12) matrix_pos = "0-1";
+					when(15) matrix_pos = "0-2";
+					when(16) matrix_pos = "0-3";
+					when(27) matrix_pos = "0-4";
+					when(28) matrix_pos = "0-5";
+					when(31) matrix_pos = "0-6";
+					when(32) matrix_pos = "0-7";
+
+					when(9) matrix_pos = "1-0";
+					when(10) matrix_pos = "1-1";
+					when(13) matrix_pos = "1-2";
+					when(14) matrix_pos = "1-3";
+					when(25) matrix_pos = "1-4";
+					when(26) matrix_pos = "1-5";
+					when(29) matrix_pos = "1-6";
+					when(30) matrix_pos = "1-7";
+
+					when(3) matrix_pos = "2-0";
+					when(4) matrix_pos = "2-1";
+					when(7) matrix_pos = "2-2";
+					when(8) matrix_pos = "2-3";
+					when(19) matrix_pos = "2-4";
+					when(20) matrix_pos = "2-5";
+					when(23) matrix_pos = "2-6";
+					when(24) matrix_pos = "2-7";
+
+					when(1) matrix_pos = "3-0";
+					when(2) matrix_pos = "3-1";
+					when(5) matrix_pos = "3-2";
+					when(6) matrix_pos = "3-3";
+					when(17) matrix_pos = "3-4";
+					when(18) matrix_pos = "3-5";
+					when(21) matrix_pos = "3-6";
+					when(22) matrix_pos = "3-7";
+
+					otherwise matrix_pos = "@@@";
+
+				end;
+
+			end;
+			else do;
+
+				select(binary_chunck_value + 1);
+
+					when(22) matrix_pos = "0-0";
+					when(24) matrix_pos = "0-1";
+					when(30) matrix_pos = "0-2";
+					when(32) matrix_pos = "0-3";
+
+					when(21) matrix_pos = "1-0";
+					when(23) matrix_pos = "1-1";
+					when(29) matrix_pos = "1-2";
+					when(31) matrix_pos = "1-3";
+
+					when(18) matrix_pos = "2-0";
+					when(20) matrix_pos = "2-1";
+					when(26) matrix_pos = "2-2";
+					when(28) matrix_pos = "2-3";
+
+					when(17) matrix_pos = "3-0";
+					when(19) matrix_pos = "3-1";
+					when(25) matrix_pos = "3-2";
+					when(27) matrix_pos = "3-3";
+
+					when(6) matrix_pos = "4-0";
+					when(8) matrix_pos = "4-1";
+					when(14) matrix_pos = "4-2";
+					when(16) matrix_pos = "4-3";
+
+					when(5) matrix_pos = "5-0";
+					when(7) matrix_pos = "5-1";
+					when(13) matrix_pos = "5-2";
+					when(15) matrix_pos = "5-3";
+
+					when(2) matrix_pos = "6-0";
+					when(4) matrix_pos = "6-1";
+					when(10) matrix_pos = "6-2";
+					when(12) matrix_pos = "6-3";
+
+					when(1) matrix_pos = "7-0";
+					when(3) matrix_pos = "7-1";
+					when(9) matrix_pos = "7-2";
+					when(11) matrix_pos = "7-3";
+
+					otherwise matrix_pos = "@@@";
+
+				end;				
+
+			end;
+
+			geohash_coor_mat = catx("#", geohash_coor_mat, matrix_pos);
+			cont = cont + 1;
+
+		end;
+
+		return(geohash_coor_mat);
+
+	endsub;
+
 	FUNCTION geohash(longitude, latitude, level) $;
 
 		/*
