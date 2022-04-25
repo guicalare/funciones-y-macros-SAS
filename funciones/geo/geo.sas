@@ -4,8 +4,8 @@ proc fcmp outlib=sasuser.userfuncs.geo;
 
 		length position $ 25;
 
-		array level_rows[4] (8, 32, 256, 1024, 8192, 32768, 262144, 1048576, 8388608, 33554432, 268435456, 1073741824);
-		array level_cols[4] (4, 32, 128, 1024, 4096, 32768, 131072, 1048576, 4194304, 33554432, 134217728, 1073741824);
+		array level_rows[12] (8, 32, 256, 1024, 8192, 32768, 262144, 1048576, 8388608, 33554432, 268435456, 1073741824);
+		array level_cols[12] (4, 32, 128, 1024, 4096, 32768, 131072, 1048576, 4194304, 33554432, 134217728, 1073741824);
 
 		row = 0;
 		col = 0;
@@ -19,8 +19,8 @@ proc fcmp outlib=sasuser.userfuncs.geo;
 
 			if i ^= level then do;	
 
-				row = row + level_rows[i] * row_temp;
-				col = col + level_cols[i] * col_temp;
+				row = row + level_rows[level + 1 - i] * row_temp;
+				col = col + level_cols[level + 1 - i] * col_temp;
 
 			end;
 			else do;
@@ -91,7 +91,7 @@ proc fcmp outlib=sasuser.userfuncs.geo;
 			hash_chunck = substr(hash_bits, j, j+5);
 			binary_chunck_value = input(hash_chunck, binary5.);
 
-			if mod(cont, 2) ^= 1 then do;
+			if mod(cont, 2) ^= 0 then do;
 
 				select(binary_chunck_value + 1);
 
